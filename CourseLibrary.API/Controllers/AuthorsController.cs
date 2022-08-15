@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using CourseLibrary.API.Entities;
 using CourseLibrary.API.Helpers;
 using CourseLibrary.API.Models;
 using CourseLibrary.API.ResourceParameters;
@@ -36,13 +37,32 @@ namespace CourseLibrary.API.Controllers
             return Ok(_mapper.Map<IEnumerable<AuthorDto>>(authorsFromRepo));
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id}", Name = "GetAuthor")]
         public IActionResult GetAuthor(Guid id)
         {
             var author = _courseLibraryRepository.GetAuthor(id);
             if (author == null)
                 return NotFound();
             return Ok(_mapper.Map<IEnumerable<AuthorDto>>(author));
+        }
+
+        [HttpPost]
+        public ActionResult<AuthorDto> CreateAuthor(AuthorForCreationDto authorForCreationDto)
+        {
+            var authorEntity = _mapper.Map<Author>(authorForCreationDto);
+            _courseLibraryRepository.AddAuthor(authorEntity);
+            _courseLibraryRepository.Save();
+
+            var authorToReturn = _mapper.Map<AuthorDto>(authorEntity);
+            return CreatedAtRoute("GetAuthor",
+                new { id = authorToReturn.Id }, authorToReturn);
+        }
+
+        [HttpOptions]
+        public IActionResult GetAuthorsOptions()
+        {
+            Response.Headers.Add("Allow", "GET,OPTIONS,POST");
+            return Ok();
         }
     }
 }
